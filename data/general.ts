@@ -1,30 +1,34 @@
 export const generalData = {
-  name: "John Doe",
-  avatar: "https://github.com/ibelick.png",
-  jobTitle: "Senior Front-End Developer",
-  website: "https://www.julienthibeaut.xyz",
-  about:
-    "Hey there! I'm John, a senior front-end developer with 10 years of experience in web development.",
+  name: "mehedi hassan",
+  avatar: "/me.jpg",
+  jobTitle: "software engineer",
+  website: "https://github.com/MehediH",
   contacts: [
     {
-      label: "Email",
-      value: "john.doe@gmail.com",
-      href: "mailto:john.doe@gmail.com",
+      label: "resume",
+      value: "click to view",
+      href: "./resume.pdf",
     },
     {
-      label: "Twitter",
-      value: "ibelick",
-      href: "https://twitter.com/ibelick",
+      label: "email",
+      value: "meh@builtbymeh.com",
+      href: "mailto:meh@builtbymeh.com",
     },
     {
-      label: "Github",
-      value: "ibelick",
-      href: "https://github.com/ibelick",
+      label: "linkedin",
+      value: "@meh-hassan",
+      href: "https://www.linkedin.com/in/meh-hassan/",
     },
     {
-      label: "Read.CV",
-      value: "ibelick",
-      href: "https://read.cv/ibelick",
+      label: "twitter",
+      value: "@mehedih_",
+      href: "https://twitter.com/mehedih_",
     },
+    {
+      label: "github",
+      value: "@mehedih",
+      href: "https://github.com/MehediH",
+    },
+   
   ],
 };
