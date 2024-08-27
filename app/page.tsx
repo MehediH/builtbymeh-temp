@@ -58,6 +58,19 @@ const Content: React.FC<ContentProps> = ({ title, items }) => {
                     {item.description}
                   </p>
                 ) : null}
+
+                {item.labels && (
+                  <ul className="my-2 opacity-50 flex flex-wrap transition-all hover:opacity-100 cursor-pointer">
+                    {item.labels.map((val, index) => (
+                      <span
+                        key={index}
+                        className="mr-2 mb-2 border border-slate-800 rounded-full px-2 text-xs"
+                      >
+                        {val}
+                      </span>
+                    ))}
+                  </ul>
+                )}
               </div>
             </div>
           );
