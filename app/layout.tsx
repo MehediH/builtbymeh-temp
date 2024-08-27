@@ -9,7 +9,7 @@ import GradientBackground from "@/components/gradient-bg";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: `${generalData.name} - ${generalData.jobTitle}`,
+  title: `${generalData.name}`,
   description:
     " hey! i am mehedi - a software engineer who loves simplicity and building fun products",
   openGraph: {
