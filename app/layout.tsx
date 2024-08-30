@@ -5,6 +5,7 @@ import Providers from "./providers";
 import { generalData } from "@/data/general";
 import type { Metadata } from "next";
 import GradientBackground from "@/components/gradient-bg";
+import Head from "next/head";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -39,6 +40,24 @@ export default function RootLayout({
   return (
     <ServerThemeProvider attribute="class">
       <html lang="en">
+        <Head>
+          <title>mehedi hassan</title>
+          <meta
+            name="description"
+            content="a software engineer based in london"
+          />
+
+          <meta property="og:title" content="mehedi hassan" key="title" />
+          <meta
+            property="og:description"
+            content="a software engineer based in london"
+          />
+          <meta
+            property="og:image"
+            content="https://builtbymeh.com/cover.png"
+          />
+          <link rel="shortcut icon" href="/favicon.ico" />
+        </Head>
         <body className={`${inter.className}`}>
           <GradientBackground>
             <Providers>{children}</Providers>
