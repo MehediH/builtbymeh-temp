@@ -228,12 +228,7 @@ export default function Home() {
         <div className="flex-1 flex flex-col justify-center">
           <div className="flex flex-col md:flex-row md:items-end gap-6 md:gap-10">
             {/* Profile image / Vinyl */}
-            <motion.div
-              className="w-52 h-52 md:w-72 md:h-72 relative shrink-0"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6 }}
-            >
+            <div className="w-52 h-52 md:w-72 md:h-72 relative shrink-0">
               {/* Profile image - always visible */}
               <div className="absolute inset-0 rounded-2xl overflow-hidden">
                 <Image
@@ -275,16 +270,13 @@ export default function Home() {
                   </motion.div>
                 )}
               </AnimatePresence>
-            </motion.div>
+            </div>
 
             {/* Name and description next to image */}
             <div className="flex flex-col justify-end">
-              <motion.h1
+              <h1
                 className="text-[15vw] md:text-[9vw] lg:text-[7vw] leading-[0.85] tracking-tight italic mb-4"
                 style={{ fontFamily: displayFont.startsWith("--") ? `var(${displayFont})` : displayFont }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.1 }}
               >
                 mehedi<br />
                 <span className="inline-flex items-center gap-4">
@@ -329,14 +321,9 @@ export default function Home() {
                     )}
                   </AnimatePresence>
                 </span>
-              </motion.h1>
+              </h1>
 
-              <motion.p
-                className="text-base md:text-lg opacity-70 leading-relaxed mb-4"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-              >
+              <p className="text-base md:text-lg opacity-70 leading-relaxed mb-4">
                 building fun things at{" "}
                 <a
                   href="https://granola.ai"
@@ -354,29 +341,19 @@ export default function Home() {
                   sonder
                 </a>
                 .
-              </motion.p>
+              </p>
 
-              <motion.div
-                className="flex flex-wrap gap-6"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.3 }}
-              >
+              <div className="flex flex-wrap gap-6">
                 {generalData.contacts.map((contact, i) => (
                   <ContactLink key={i} contact={contact} />
                 ))}
-              </motion.div>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Footer with compact info */}
-        <motion.div
-          className="pt-8 border-t border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-4 text-sm"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-        >
+        <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-4 text-sm">
           <div className="flex flex-col md:flex-row gap-2 md:gap-8">
             <p>
               <span className="opacity-50">previously:</span>{" "}
@@ -423,7 +400,7 @@ export default function Home() {
           <div className="text-xs opacity-30 font-mono lowercase">
             {time.toLocaleTimeString("en-GB", { hour12: false })} london
           </div>
-        </motion.div>
+        </div>
       </div>
 
       {/* Debug Panel */}

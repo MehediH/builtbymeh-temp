@@ -1,4 +1,4 @@
-export const contentData = [
+export const contentData: Content[] = [
   {
     title: "Work Experience",
     items: [
