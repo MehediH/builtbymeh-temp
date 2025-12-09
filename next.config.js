@@ -7,6 +7,11 @@ const nextConfig = {
         hostname: "github.com",
         port: "",
       },
+      {
+        protocol: "https",
+        hostname: "i.scdn.co",
+        port: "",
+      },
     ],
   },
 };

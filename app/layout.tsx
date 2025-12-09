@@ -1,13 +1,40 @@
 import "./globals.css";
-import { Inter } from "next/font/google";
-import { ServerThemeProvider } from "next-themes";
+import {
+  Space_Grotesk,
+  Instrument_Serif,
+  Space_Mono,
+  Raleway,
+} from "next/font/google";
 import Providers from "./providers";
 import { generalData } from "@/data/general";
 import type { Metadata } from "next";
-import GradientBackground from "@/components/gradient-bg";
-import Head from "next/head";
+import HalftoneBackground from "@/components/halftone-bg";
 
-const inter = Inter({ subsets: ["latin"] });
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  weight: ["300", "400", "500", "600", "700"],
+});
+
+const instrumentSerif = Instrument_Serif({
+  subsets: ["latin"],
+  variable: "--font-display",
+  weight: "400",
+  style: ["normal", "italic"],
+});
+
+const spaceMono = Space_Mono({
+  weight: ["400", "700"],
+  subsets: ["latin"],
+  variable: "--font-mono",
+});
+
+const raleway = Raleway({
+  subsets: ["latin"],
+  variable: "--font-raleway",
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
+  style: ["normal", "italic"],
+});
 
 export const metadata: Metadata = {
   title: `${generalData.name}`,
@@ -23,12 +50,15 @@ export const metadata: Metadata = {
       "hey! i am mehedi - a software engineer who loves simplicity and building fun products",
     images: [
       {
-        url: "./cover.pong",
+        url: "./cover.png",
         width: 1200,
         height: 630,
         alt: `${generalData.name} - ${generalData.jobTitle}`,
       },
     ],
+  },
+  icons: {
+    icon: "/favicon.svg",
   },
 };
 
@@ -38,32 +68,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ServerThemeProvider attribute="class">
-      <html lang="en">
-        <Head>
-          <title>mehedi hassan</title>
-          <meta
-            name="description"
-            content="a software engineer based in london"
-          />
-
-          <meta property="og:title" content="mehedi hassan" key="title" />
-          <meta
-            property="og:description"
-            content="a software engineer based in london"
-          />
-          <meta
-            property="og:image"
-            content="https://builtbymeh.com/cover.png"
-          />
-          <link rel="shortcut icon" href="/favicon.ico" />
-        </Head>
-        <body className={`${inter.className}`}>
-          <GradientBackground>
-            <Providers>{children}</Providers>
-          </GradientBackground>
-        </body>
-      </html>
-    </ServerThemeProvider>
+    <html lang="en" suppressHydrationWarning>
+      <body
+        className={`${spaceGrotesk.variable} ${instrumentSerif.variable} ${spaceMono.variable} ${raleway.variable} font-sans`}
+      >
+        <Providers>
+          <HalftoneBackground>{children}</HalftoneBackground>
+        </Providers>
+      </body>
+    </html>
   );
 }

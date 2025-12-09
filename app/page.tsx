@@ -1,183 +1,467 @@
+"use client";
+
 import Image from "next/image";
-import ThemeSwitch from "@/components/theme-switch";
 import { generalData } from "@/data/general";
 import { contentData } from "@/data/content";
-import type { Content } from "@/data/content";
+import { useState, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Dithering } from "@paper-design/shaders-react";
 
-type ContentProps = Content;
+interface SpotifyData {
+  isPlaying: boolean;
+  title?: string;
+  artist?: string;
+  album?: string;
+  albumImageUrl?: string;
+  songUrl?: string;
+}
 
-const Content: React.FC<ContentProps> = ({ title, items }) => {
+function ContactLink({ contact }: { contact: { label: string; href: string } }) {
+  const [isHovering, setIsHovering] = useState(false);
+
   return (
-    <section className="my-14 text-sm">
-      <h3 className="mb-6 text-base font-medium underline underline-offset-2">
-        {title}
-      </h3>
-      <div className="flex flex-col gap-6">
-        {items.map((item, index) => {
-          return (
-            <div className="flex" key={index}>
-              <div className="mr-8 max-w-[100px] w-full text-slate-400 dark:text-slate-300">
-                {item.date}
-              </div>
-              <div className="flex flex-col flex-1">
-                {item.link ? (
-                  <a
-                    href={item.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:underline inline-flex font-medium text-slate-700 dark:text-slate-100"
-                  >
-                    <h4 className="inline-flex">
-                      {item.title}{" "}
-                      {item.link ? (
-                        <svg
-                          width="12"
-                          height="12"
-                          viewBox="0 0 12 12"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            d="M3.5 3C3.22386 3 3 3.22386 3 3.5C3 3.77614 3.22386 4 3.5 4V3ZM8.5 3.5H9C9 3.22386 8.77614 3 8.5 3V3.5ZM8 8.5C8 8.77614 8.22386 9 8.5 9C8.77614 9 9 8.77614 9 8.5H8ZM2.64645 8.64645C2.45118 8.84171 2.45118 9.15829 2.64645 9.35355C2.84171 9.54882 3.15829 9.54882 3.35355 9.35355L2.64645 8.64645ZM3.5 4H8.5V3H3.5V4ZM8 3.5V8.5H9V3.5H8ZM8.14645 3.14645L2.64645 8.64645L3.35355 9.35355L8.85355 3.85355L8.14645 3.14645Z"
-                            className="fill-current text-slate-900 dark:text-slate-100"
-                          ></path>
-                        </svg>
-                      ) : null}
-                    </h4>
-                  </a>
-                ) : (
-                  <h4 className="font-medium text-slate-700 dark:text-slate-100">
-                    {item.title}
-                  </h4>
-                )}
-                <p className="text-slate-600 dark:text-gray-400">
-                  {item.subTitle}
-                </p>
-                {item.description ? (
-                  <p className="text-slate-600 dark:text-gray-400 mt-2">
-                    {item.description}
-                  </p>
-                ) : null}
-
-                {item.labels && (
-                  <ul className="my-2 opacity-50 flex flex-wrap transition-all hover:opacity-100 cursor-pointer">
-                    {item.labels.map((val, index) => (
-                      <span
-                        key={index}
-                        className="mr-2 mb-2 border border-slate-800 rounded-full px-2 text-xs"
-                      >
-                        {val}
-                      </span>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </section>
+    <a
+      href={contact.href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-sm opacity-50 hover:opacity-100 hover:text-[var(--color-vibrant)] transition-all lowercase relative z-10"
+      onMouseEnter={() => setIsHovering(true)}
+      onMouseLeave={() => setIsHovering(false)}
+    >
+      {contact.label === "say hi" && (
+        <AnimatePresence>
+          {isHovering && (
+            <motion.span
+              className="absolute right-[calc(100%+1px)] origin-[70%_70%] grayscale sepia -z-10"
+              initial={{ x: 20, opacity: 0 }}
+              animate={{
+                x: 0,
+                opacity: 1,
+                scale: 1,
+                filter: "blur(0px)",
+                rotate: [0, 14, -8, 14, -4, 10, 0],
+              }}
+              exit={{ opacity: 0, scale: 0.5, filter: "blur(4px)" }}
+              transition={{
+                x: { duration: 0.2, ease: "easeOut" },
+                opacity: { duration: 0.15 },
+                scale: { duration: 0.15 },
+                filter: { duration: 0.15 },
+                rotate: {
+                  duration: 0.6,
+                  ease: "easeInOut",
+                },
+              }}
+            >
+              👋🏽
+            </motion.span>
+          )}
+        </AnimatePresence>
+      )}
+      {contact.label}
+    </a>
   );
-};
+}
 
 export default function Home() {
+  const [time, setTime] = useState(new Date());
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
+  const [hoveredItem, setHoveredItem] = useState<{
+    title: string;
+    description: string;
+    image?: string;
+    link?: string;
+  } | null>(null);
+  const [spotify, setSpotify] = useState<SpotifyData>({ isPlaying: false });
+  const [isHoveringSong, setIsHoveringSong] = useState(false);
+  const [debugOpen, setDebugOpen] = useState(false);
+  const [displayFont, setDisplayFont] = useState("--font-raleway");
+
+  const fontOptions = [
+    { label: "Raleway", value: "--font-raleway" },
+    { label: "Space Grotesk", value: "--font-sans" },
+  ];
+
+  const fetchSpotify = useCallback(async () => {
+    try {
+      const res = await fetch("/api/spotify");
+      const data = await res.json();
+      setSpotify(data);
+    } catch (err) {
+      console.error("Failed to fetch Spotify data:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSpotify();
+    const interval = setInterval(fetchSpotify, 10000);
+    return () => clearInterval(interval);
+  }, [fetchSpotify]);
+
+  useEffect(() => {
+    const interval = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    const handleResize = () => {
+      setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePos({ x: e.clientX, y: e.clientY });
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
+
+  const work = contentData.find((c) => c.title === "Work Experience");
+  const projects = contentData.find((c) => c.title === "Projects");
+
   return (
-    <>
-      <main className="max-w-xl mx-auto px-6 py-20 relative min-h-screen font-light">
-        <section className="flex items-center">
-          <Image
-            alt="Author"
-            src={generalData.avatar}
-            width={140}
-            height={140}
-            draggable={false}
-            className="rounded-full object-cover select-none"
-          />
-          <div className="ml-8">
-            <h1 className="mb-0.5 text-2xl text-slate-900 dark:text-slate-100">
-              {generalData.name}
-            </h1>
-            <p className="text-slate-600 dark:text-slate-300 text-lg">
-              {generalData.jobTitle} in london
-            </p>
-            {generalData.website ? (
-              <span className="text-sm text-slate-400 dark:text-slate-400">
+    <main className="h-screen overflow-hidden flex flex-col">
+      {/* Floating tooltip with dithering shader */}
+      <AnimatePresence mode="wait">
+        {hoveredItem && (
+          <motion.div
+            key={hoveredItem.title}
+            className="fixed z-[100] pointer-events-none overflow-hidden shadow-2xl rounded-2xl bg-[#301c2a] max-w-sm"
+            style={{
+              left: Math.min(mousePos.x + 24, windowSize.width - 380),
+              bottom: windowSize.height - mousePos.y + 16,
+            }}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+          >
+            <div className="absolute inset-0 overflow-hidden rounded-2xl">
+              <Dithering
+                width={300}
+                height={400}
+                colorBack="#301c2a"
+                colorFront="#bc208f"
+                shape="warp"
+                type="4x4"
+                size={2.2}
+                speed={0.72}
+                scale={0.88}
+              />
+            </div>
+            <div className="relative z-10 p-5">
+              {hoveredItem.image && (
+                <div className="w-[200px]">
+                  <div className="w-full aspect-square overflow-hidden rounded-lg mb-4">
+                    <Image
+                      src={hoveredItem.image}
+                      alt=""
+                      width={200}
+                      height={200}
+                      className="object-cover w-full h-full"
+                    />
+                  </div>
+                  <p className="text-white/50 text-xs tracking-wider mb-1">
+                    {spotify.isPlaying ? "now listening to" : "recently listened to"}
+                  </p>
+                  <p className="font-medium text-white leading-tight mb-1 break-words">
+                    {hoveredItem.title}
+                  </p>
+                  <p className="text-white/70 text-sm break-words">
+                    {hoveredItem.description}
+                  </p>
+                </div>
+              )}
+              {!hoveredItem.image && (
+                <>
+                  <p className="font-medium mb-2 text-white">
+                    {hoveredItem.title}
+                  </p>
+                  <p className="text-white/70 text-sm leading-relaxed">
+                    {hoveredItem.description}
+                  </p>
+                </>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Marquee header */}
+      <div className="shrink-0 bg-[#bc208f] text-white py-2 overflow-hidden">
+        <div className="animate-marquee whitespace-nowrap flex">
+          {[...Array(10)].map((_, i) => (
+            <span
+              key={i}
+              className="mx-8 text-xs font-medium lowercase tracking-widest"
+            >
+              product engineer • london
+              {spotify.title && (
+                <>
+                  {" "}•{" "}
+                  <a
+                    href={spotify.songUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:underline underline-offset-2"
+                    onMouseEnter={() => setIsHoveringSong(true)}
+                    onMouseLeave={() => setIsHoveringSong(false)}
+                  >
+                    {spotify.isPlaying ? "now listening to" : "recently listened to"}: {spotify.title}
+                  </a>
+                </>
+              )}
+              {" "}•
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Main content - single viewport */}
+      <div className="flex-1 flex flex-col justify-between px-6 md:px-12 lg:px-24 py-12">
+        {/* Hero */}
+        <div className="flex-1 flex flex-col justify-center">
+          <div className="flex flex-col md:flex-row md:items-end gap-6 md:gap-10">
+            {/* Profile image / Vinyl */}
+            <motion.div
+              className="w-52 h-52 md:w-72 md:h-72 relative shrink-0"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6 }}
+            >
+              {/* Profile image - always visible */}
+              <div className="absolute inset-0 rounded-2xl overflow-hidden">
+                <Image
+                  alt="Author"
+                  src={generalData.avatar}
+                  fill
+                  draggable={false}
+                  className="object-cover"
+                />
+              </div>
+
+              {/* Album cover overlay - appears on hover */}
+              <AnimatePresence>
+                {isHoveringSong && spotify.albumImageUrl && (
+                  <motion.div
+                    className="absolute inset-0 flex items-center justify-center"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <motion.div
+                      className="w-32 h-32 md:w-44 md:h-44 rounded-full overflow-hidden shadow-2xl"
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                    >
+                      <Image
+                        alt={spotify.album || "Album cover"}
+                        src={spotify.albumImageUrl}
+                        fill
+                        draggable={false}
+                        className="object-cover"
+                      />
+                      {/* Vinyl hole */}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-[#030303] border-2 border-white/20" />
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+
+            {/* Name and description next to image */}
+            <div className="flex flex-col justify-end">
+              <motion.h1
+                className="text-[15vw] md:text-[9vw] lg:text-[7vw] leading-[0.85] tracking-tight italic mb-4"
+                style={{ fontFamily: displayFont.startsWith("--") ? `var(${displayFont})` : displayFont }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.1 }}
+              >
+                mehedi<br />
+                <span className="inline-flex items-center gap-4">
+                  hassan
+                  <AnimatePresence>
+                    {spotify.albumImageUrl && (
+                      <motion.a
+                        href={spotify.songUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        transition={{ duration: 0.3 }}
+                        className="relative w-[100px] h-[100px] ml-2 cursor-pointer block"
+                        onMouseEnter={() =>
+                          setHoveredItem({
+                            title: spotify.title || "",
+                            description: spotify.artist || "",
+                            image: spotify.albumImageUrl,
+                            link: spotify.songUrl,
+                          })
+                        }
+                        onMouseLeave={() => setHoveredItem(null)}
+                      >
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                          className="w-full h-full rounded-full overflow-hidden"
+                        >
+                          <Image
+                            alt={spotify.album || "Album cover"}
+                            src={spotify.albumImageUrl}
+                            fill
+                            className="object-cover"
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="w-6 h-6 rounded-full bg-[#030303] border border-white/20" />
+                          </div>
+                        </motion.div>
+                      </motion.a>
+                    )}
+                  </AnimatePresence>
+                </span>
+              </motion.h1>
+
+              <motion.p
+                className="text-base md:text-lg opacity-70 leading-relaxed mb-4"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+              >
+                building fun things at{" "}
                 <a
-                  href={generalData.website}
+                  href="https://granola.ai"
+                  target="_blank"
+                  className="text-[#8DEA75] hover:underline underline-offset-4"
+                >
+                  granola
+                </a>
+                . touching grass w/{" "}
+                <a
+                  href="https://findsonder.app"
+                  target="_blank"
+                  className="text-[#E8DCC4] hover:underline underline-offset-4"
+                >
+                  sonder
+                </a>
+                .
+              </motion.p>
+
+              <motion.div
+                className="flex flex-wrap gap-6"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+              >
+                {generalData.contacts.map((contact, i) => (
+                  <ContactLink key={i} contact={contact} />
+                ))}
+              </motion.div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer with compact info */}
+        <motion.div
+          className="pt-8 border-t border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-4 text-sm"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+        >
+          <div className="flex flex-col md:flex-row gap-2 md:gap-8">
+            <p>
+              <span className="opacity-50">previously:</span>{" "}
+              {work?.items.map((item, index) => (
+                <span
+                  key={index}
+                  className="cursor-default hover:text-[var(--color-vibrant)] transition-colors"
+                  onMouseEnter={() =>
+                    setHoveredItem({
+                      title: `${item.subTitle.toLowerCase()} @ ${item.title.toLowerCase()}`,
+                      description: item.description || "",
+                    })
+                  }
+                  onMouseLeave={() => setHoveredItem(null)}
+                >
+                  {item.title.toLowerCase()}
+                  {index < work.items.length - 1 && ", "}
+                </span>
+              ))}
+            </p>
+            <p>
+              <span className="opacity-50">projects:</span>{" "}
+              {projects?.items.slice(0, 4).map((item, index) => (
+                <a
+                  key={index}
+                  href={item.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:underline"
+                  className="hover:text-[var(--color-vibrant)] transition-colors"
+                  onMouseEnter={() =>
+                    setHoveredItem({
+                      title: item.title.toLowerCase(),
+                      description: item.subTitle,
+                    })
+                  }
+                  onMouseLeave={() => setHoveredItem(null)}
                 >
-                  {generalData.website
-                    .replace(/(^\w+:|^)\/\//, "")
-                    .replace("www.", "")}
+                  {item.title.toLowerCase()}
+                  {index < 3 && ", "}
                 </a>
-              </span>
-            ) : null}
-          </div>
-        </section>
-        <section className="my-9 text-lg">
-          <div className="text-slate-600 dark:text-slate-300">
-            <p>
-              hey! i am mehedi - a software engineer who loves simplicity and
-              building fun products. this is a temporary site, you can find{" "}
-              <a
-                href="https://old.builtbymeh.com"
-                target="_blank"
-                className="transition-colors hover:text-blue-500 text-blue-600 dark:text-slate-50/60 dark:hover:text-slate-50 hover:underline hover:underline-offset-4"
-              >
-                my old site here
-              </a>{" "}
-              - it has a bit more personality. i am currently working on a new
-              site - stay tuned!
+              ))}
             </p>
           </div>
-        </section>
-        {contentData.map((content, index) => {
-          return <Content {...content} key={index} />;
-        })}
-        <section className="my-14 text-sm">
-          <h3 className="mb-6 text-base font-medium underline underline-offset-2">
-            Find me elsewhere
-          </h3>
-          <div className="flex flex-col gap-6">
-            {generalData.contacts.map((contact, index) => {
-              return (
-                <div className="flex" key={index}>
-                  <div className="mr-8 max-w-[100px] w-full text-slate-400 dark:text-slate-400">
-                    {contact.label}
-                  </div>
-                  <div className="flex flex-col flex-1 text-slate-900 dark:text-slate-100">
-                    <a
-                      href={contact.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="hover:underline inline-flex"
-                    >
-                      {contact.value}
-                      <svg
-                        width="12"
-                        height="12"
-                        viewBox="0 0 12 12"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M3.5 3C3.22386 3 3 3.22386 3 3.5C3 3.77614 3.22386 4 3.5 4V3ZM8.5 3.5H9C9 3.22386 8.77614 3 8.5 3V3.5ZM8 8.5C8 8.77614 8.22386 9 8.5 9C8.77614 9 9 8.77614 9 8.5H8ZM2.64645 8.64645C2.45118 8.84171 2.45118 9.15829 2.64645 9.35355C2.84171 9.54882 3.15829 9.54882 3.35355 9.35355L2.64645 8.64645ZM3.5 4H8.5V3H3.5V4ZM8 3.5V8.5H9V3.5H8ZM8.14645 3.14645L2.64645 8.64645L3.35355 9.35355L8.85355 3.85355L8.14645 3.14645Z"
-                          className="fill-current text-slate-900 dark:text-slate-100"
-                        ></path>
-                      </svg>
-                    </a>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="text-xs opacity-30 font-mono lowercase">
+            {time.toLocaleTimeString("en-GB", { hour12: false })} london
           </div>
-        </section>
-        <div className="px-6 fixed left-0 bottom-6 lg:block hidden opacity-40 hover:opacity-100 transition-all">
-          <ThemeSwitch />
-        </div>
-      </main>
-    </>
+        </motion.div>
+      </div>
+
+      {/* Debug Panel */}
+      <div className="fixed bottom-4 right-4 z-50">
+        <button
+          onClick={() => setDebugOpen(!debugOpen)}
+          className="bg-white/10 hover:bg-white/20 text-white text-xs px-3 py-2 rounded-lg backdrop-blur-sm transition-colors"
+        >
+          {debugOpen ? "close" : "fonts"}
+        </button>
+        <AnimatePresence>
+          {debugOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              className="absolute bottom-12 right-0 bg-[#1a1a1a] border border-white/10 rounded-xl p-4 min-w-[200px] shadow-2xl"
+            >
+              <p className="text-white/50 text-xs mb-3">display font</p>
+              <div className="flex flex-col gap-2">
+                {fontOptions.map((font) => (
+                  <button
+                    key={font.value}
+                    onClick={() => setDisplayFont(font.value)}
+                    className={`text-left text-sm px-3 py-2 rounded-lg transition-colors ${
+                      displayFont === font.value
+                        ? "bg-[var(--color-vibrant)] text-white"
+                        : "text-white/70 hover:bg-white/10"
+                    }`}
+                  >
+                    {font.label}
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </main>
   );
 }

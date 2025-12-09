@@ -5,8 +5,8 @@ export const contentData = [
       {
         title: "Causaly",
         subTitle: "Software Engineer",
-        date: "2023 - present",
-        description: "working as a full-stack engineer on a new AI Reports product that reduces a manual workflow for scientists in big pharma companies from 2-3 days to just 3-5 minutes. built an advanced pipeline for automating our E2E testing pipeline, and also building an internal design system.",
+        date: "2023 - 2024",
+        description: "worked as a full-stack engineer on a new AI Reports product that reduced a manual workflow for scientists in big pharma companies from 2-3 days to just 3-5 minutes. built an advanced pipeline for automating our E2E testing pipeline, and also built an internal design system.",
         labels: ["typescript (fp-ts)", "react", "graphql", "postgres", "elastic search", "redis", "gcp", "docker"]
       },
       {
@@ -20,7 +20,7 @@ export const contentData = [
         title: "Qualcomm",
         subTitle: "Software Engineering Intern",
         date: "2020",
-        description: "worked in the Windows on Snapdragon team, building a hardware tuning app with C++ to enable system engineers to stress test, monitor, identify, and mitigate overheating issues across an SoC — reducing CPU usage of the app by 60%.",
+        description: "worked in the Windows on Snapdragon team, built a hardware tuning app with C++ to enable system engineers to stress test, monitor, identify, and mitigate overheating issues across an SoC — reduced CPU usage of the app by 60%.",
         labels: ["c++", "c#", "win32", "electron"]
       },
     ],
