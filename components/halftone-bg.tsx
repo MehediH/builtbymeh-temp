@@ -14,9 +14,17 @@ const imageMap = {
 const HalftoneBackground = ({ children }: { children: ReactNode }) => {
   const [dimensions, setDimensions] = useState({ width: 1920, height: 1080 });
   const [offset, setOffset] = useState({ x: 0.5, y: 0.5 });
+  const [hasInteracted, setHasInteracted] = useState(false);
   const { activeImage } = useBackground();
 
   const isHovering = activeImage !== "default";
+
+  // Track when user first hovers to enable animations
+  useEffect(() => {
+    if (isHovering && !hasInteracted) {
+      setHasInteracted(true);
+    }
+  }, [isHovering, hasInteracted]);
 
   useEffect(() => {
     const updateDimensions = () => {
@@ -55,11 +63,17 @@ const HalftoneBackground = ({ children }: { children: ReactNode }) => {
 
   return (
     <div className="relative min-h-screen bg-[#030303] text-white">
+      {/* Preload images */}
+      <div className="hidden">
+        <img src="/granola.webp" alt="" />
+        <img src="/sonder.webp" alt="" />
+      </div>
+
       <AnimatePresence mode="sync">
         <motion.div
           key={activeImage}
           className="fixed inset-0 z-0"
-          initial={{ opacity: 0 }}
+          initial={hasInteracted ? { opacity: 0 } : false}
           animate={{ opacity: isHovering ? 0.7 : 0.4 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.5, ease: "easeInOut" }}
