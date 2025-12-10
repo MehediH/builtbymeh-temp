@@ -32,7 +32,7 @@ export const contentData: Content[] = [
         title: "movienight",
         subTitle: "a comments section for netflix, think soundcloud comments for your favorite shows and movies.",
         date: "2023",
-        link: "https://getmovienight.app/",
+        link: "https://web.archive.org/web/20250123180637/https://getmovienight.app/",
         labels: ["react native", "postgres", "typescript"]
       },
       {
