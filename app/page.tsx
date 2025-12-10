@@ -83,7 +83,7 @@ export default function Home() {
 
   // Generate shader variations based on seed
   const getShaderVariation = (seed: number) => {
-    const shapes = ["warp", "lump", "zigzag", "conic"] as const;
+    const shapes = ["warp", "simplex", "dots", "wave", "ripple", "swirl", "sphere"] as const;
     const types = ["2x2", "4x4", "8x8"] as const;
     // Darker colors that work well with white text
     const colors = ["#bc208f", "#4767dc", "#2d6a4f", "#c44536", "#7b2cbf"];
