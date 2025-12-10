@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Dithering } from "@paper-design/shaders-react";
 import { useBackground } from "@/app/contexts/background-context";
+import Marquee from "react-fast-marquee";
 
 interface SpotifyData {
   isPlaying: boolean;
@@ -77,7 +78,25 @@ export default function Home() {
     description: string;
     image?: string;
     link?: string;
+    shaderSeed?: number;
   } | null>(null);
+
+  // Generate shader variations based on seed
+  const getShaderVariation = (seed: number) => {
+    const shapes = ["warp", "lump", "zigzag", "conic"] as const;
+    const types = ["2x2", "4x4", "8x8"] as const;
+    // Darker colors that work well with white text
+    const colors = ["#bc208f", "#4767dc", "#2d6a4f", "#c44536", "#7b2cbf"];
+
+    return {
+      shape: shapes[seed % shapes.length],
+      type: types[seed % types.length],
+      colorFront: colors[seed % colors.length],
+      size: 1.5 + (seed % 5) * 0.4,
+      speed: 0.4 + (seed % 4) * 0.2,
+      scale: 0.6 + (seed % 5) * 0.15,
+    };
+  };
   const [spotify, setSpotify] = useState<SpotifyData | null>(null);
   const [isHoveringSong, setIsHoveringSong] = useState(false);
   const [songChanged, setSongChanged] = useState(false);
@@ -149,17 +168,24 @@ export default function Home() {
             transition={{ duration: 0.15, ease: "easeOut" }}
           >
             <div className="absolute inset-0 overflow-hidden rounded-2xl">
-              <Dithering
-                width={300}
-                height={400}
-                colorBack="#301c2a"
-                colorFront="#bc208f"
-                shape="warp"
-                type="4x4"
-                size={2.2}
-                speed={0.72}
-                scale={0.88}
-              />
+              {(() => {
+                const variation = getShaderVariation(hoveredItem.shaderSeed || 0);
+                return (
+                  <Dithering
+                    width={400}
+                    height={300}
+                    colorBack="#301c2a"
+                    colorFront={variation.colorFront}
+                    shape={variation.shape}
+                    type={variation.type}
+                    size={variation.size}
+                    speed={variation.speed}
+                    scale={variation.scale}
+                    style={{ width: "100%", height: "100%" }}
+                  />
+                );
+              })()}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
             </div>
             <div className="relative z-10 p-5">
               {hoveredItem.image && (
@@ -202,17 +228,17 @@ export default function Home() {
       </AnimatePresence>
 
       {/* Marquee header */}
-      <div className="shrink-0 bg-[#bc208f] text-white py-2 overflow-hidden">
-        <motion.div
-          className="animate-marquee whitespace-nowrap flex"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: spotify ? 1 : 0 }}
-          transition={{ duration: 0.6 }}
-        >
-          {[...Array(20)].map((_, i) => (
+      <motion.div
+        className="shrink-0 bg-[#bc208f] text-white py-2"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: spotify ? 1 : 0 }}
+        transition={{ duration: 0.6 }}
+      >
+        <Marquee speed={40} gradient={false}>
+          {[...Array(4)].map((_, i) => (
             <span
               key={i}
-              className="mx-8 text-xs font-medium lowercase tracking-widest shrink-0"
+              className="mx-8 text-xs font-medium lowercase tracking-widest"
             >
               product engineer • london
               {spotify?.title && (
@@ -237,8 +263,8 @@ export default function Home() {
               •
             </span>
           ))}
-        </motion.div>
-      </div>
+        </Marquee>
+      </motion.div>
 
       {/* Main content - single viewport */}
       <div className="flex-1 flex flex-col justify-between px-6 md:px-12 lg:px-24 py-12">
@@ -307,21 +333,19 @@ export default function Home() {
                   <span className="relative w-[100px] h-[100px] ml-2 block">
                     {/* Placeholder to prevent layout shift */}
                     <span className="absolute inset-0 rounded-full" />
-                    <AnimatePresence>
+                    <AnimatePresence mode="wait">
                       {spotify?.albumImageUrl && (
                         <motion.a
+                          key={spotify?.title}
                           href={spotify?.songUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          initial={{ opacity: 0 }}
-                          animate={{
-                            opacity: 1,
-                            scale: songChanged ? [1, 1.15, 1] : 1,
-                          }}
-                          exit={{ opacity: 0 }}
+                          initial={{ opacity: 0, scale: 0.85, rotate: -45 }}
+                          animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                          exit={{ opacity: 0, scale: 0.85, rotate: 45 }}
                           transition={{
-                            opacity: { duration: 0.8, ease: "easeInOut" },
-                            scale: { duration: 0.6, ease: "easeOut" },
+                            duration: 0.8,
+                            ease: [0.34, 1.56, 0.64, 1],
                           }}
                           className="absolute inset-0 cursor-pointer block"
                           onMouseEnter={() =>
@@ -406,6 +430,7 @@ export default function Home() {
                     setHoveredItem({
                       title: `${item.subTitle.toLowerCase()} @ ${item.title.toLowerCase()}`,
                       description: item.description || "",
+                      shaderSeed: index,
                     })
                   }
                   onMouseLeave={() => setHoveredItem(null)}
@@ -428,6 +453,7 @@ export default function Home() {
                     setHoveredItem({
                       title: item.title.toLowerCase(),
                       description: item.subTitle,
+                      shaderSeed: index + 10,
                     })
                   }
                   onMouseLeave={() => setHoveredItem(null)}

@@ -4,6 +4,7 @@ import {
   Instrument_Serif,
   Space_Mono,
   Raleway,
+  Fraunces,
 } from "next/font/google";
 import Providers from "./providers";
 import { generalData } from "@/data/general";
@@ -32,6 +33,13 @@ const spaceMono = Space_Mono({
 const raleway = Raleway({
   subsets: ["latin"],
   variable: "--font-raleway",
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
+  style: ["normal", "italic"],
+});
+
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  variable: "--font-fraunces",
   weight: ["300", "400", "500", "600", "700", "800", "900"],
   style: ["normal", "italic"],
 });
@@ -68,7 +76,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${spaceGrotesk.variable} ${instrumentSerif.variable} ${spaceMono.variable} ${raleway.variable} font-sans`}
+        className={`${spaceGrotesk.variable} ${instrumentSerif.variable} ${spaceMono.variable} ${raleway.variable} ${fraunces.variable} font-sans`}
       >
         <Providers>
           <HalftoneBackground>{children}</HalftoneBackground>
