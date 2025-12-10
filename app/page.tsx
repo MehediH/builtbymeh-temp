@@ -209,10 +209,10 @@ export default function Home() {
           animate={{ opacity: spotify ? 1 : 0 }}
           transition={{ duration: 0.6 }}
         >
-          {[...Array(10)].map((_, i) => (
+          {[...Array(20)].map((_, i) => (
             <span
               key={i}
-              className="mx-8 text-xs font-medium lowercase tracking-widest"
+              className="mx-8 text-xs font-medium lowercase tracking-widest shrink-0"
             >
               product engineer • london
               {spotify?.title && (
