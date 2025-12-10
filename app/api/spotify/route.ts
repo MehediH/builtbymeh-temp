@@ -48,7 +48,8 @@ async function getRecentlyPlayed(access_token: string) {
     next: { revalidate: 0 },
   });
 
-  if (response.status > 400) {
+  if (!response.ok) {
+    console.error("Recently played error:", response.status, await response.text());
     return null;
   }
 

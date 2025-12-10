@@ -6,6 +6,7 @@ import { contentData } from "@/data/content";
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Dithering } from "@paper-design/shaders-react";
+import { useBackground } from "@/app/contexts/background-context";
 
 interface SpotifyData {
   isPlaying: boolean;
@@ -16,7 +17,11 @@ interface SpotifyData {
   songUrl?: string;
 }
 
-function ContactLink({ contact }: { contact: { label: string; href: string } }) {
+function ContactLink({
+  contact,
+}: {
+  contact: { label: string; href: string };
+}) {
   const [isHovering, setIsHovering] = useState(false);
 
   return (
@@ -73,25 +78,27 @@ export default function Home() {
     image?: string;
     link?: string;
   } | null>(null);
-  const [spotify, setSpotify] = useState<SpotifyData>({ isPlaying: false });
+  const [spotify, setSpotify] = useState<SpotifyData | null>(null);
   const [isHoveringSong, setIsHoveringSong] = useState(false);
-  const [debugOpen, setDebugOpen] = useState(false);
-  const [displayFont, setDisplayFont] = useState("--font-raleway");
-
-  const fontOptions = [
-    { label: "Raleway", value: "--font-raleway" },
-    { label: "Space Grotesk", value: "--font-sans" },
-  ];
+  const [songChanged, setSongChanged] = useState(false);
+  const { setActiveImage } = useBackground();
 
   const fetchSpotify = useCallback(async () => {
     try {
       const res = await fetch("/api/spotify");
       const data = await res.json();
+
+      // Check if song changed
+      if (spotify?.title && data.title && spotify.title !== data.title) {
+        setSongChanged(true);
+        setTimeout(() => setSongChanged(false), 1500);
+      }
+
       setSpotify(data);
     } catch (err) {
       console.error("Failed to fetch Spotify data:", err);
     }
-  }, []);
+  }, [spotify?.title]);
 
   useEffect(() => {
     fetchSpotify();
@@ -157,7 +164,7 @@ export default function Home() {
             <div className="relative z-10 p-5">
               {hoveredItem.image && (
                 <div className="w-[200px]">
-                  <div className="w-full aspect-square overflow-hidden rounded-lg mb-4">
+                  <div className="w-full aspect-square overflow-hidden rounded-lg mb-4 bg-white/5">
                     <Image
                       src={hoveredItem.image}
                       alt=""
@@ -167,7 +174,9 @@ export default function Home() {
                     />
                   </div>
                   <p className="text-white/50 text-xs tracking-wider mb-1">
-                    {spotify.isPlaying ? "now listening to" : "recently listened to"}
+                    {spotify?.isPlaying
+                      ? "now listening to"
+                      : "recently listened to"}
                   </p>
                   <p className="font-medium text-white leading-tight mb-1 break-words">
                     {hoveredItem.title}
@@ -194,32 +203,41 @@ export default function Home() {
 
       {/* Marquee header */}
       <div className="shrink-0 bg-[#bc208f] text-white py-2 overflow-hidden">
-        <div className="animate-marquee whitespace-nowrap flex">
+        <motion.div
+          className="animate-marquee whitespace-nowrap flex"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: spotify ? 1 : 0 }}
+          transition={{ duration: 0.6 }}
+        >
           {[...Array(10)].map((_, i) => (
             <span
               key={i}
               className="mx-8 text-xs font-medium lowercase tracking-widest"
             >
               product engineer • london
-              {spotify.title && (
+              {spotify?.title && (
                 <>
-                  {" "}•{" "}
+                  {" "}
+                  •{" "}
                   <a
-                    href={spotify.songUrl}
+                    href={spotify?.songUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hover:underline underline-offset-2"
                     onMouseEnter={() => setIsHoveringSong(true)}
                     onMouseLeave={() => setIsHoveringSong(false)}
                   >
-                    {spotify.isPlaying ? "now listening to" : "recently listened to"}: {spotify.title}
+                    {spotify?.isPlaying
+                      ? "now listening to"
+                      : "recently listened to"}
+                    : {spotify?.title}
                   </a>
                 </>
-              )}
-              {" "}•
+              )}{" "}
+              •
             </span>
           ))}
-        </div>
+        </motion.div>
       </div>
 
       {/* Main content - single viewport */}
@@ -230,7 +248,7 @@ export default function Home() {
             {/* Profile image / Vinyl */}
             <div className="w-52 h-52 md:w-72 md:h-72 relative shrink-0">
               {/* Profile image - always visible */}
-              <div className="absolute inset-0 rounded-2xl overflow-hidden">
+              <div className="absolute inset-0 rounded-2xl overflow-hidden bg-white/5">
                 <Image
                   alt="Author"
                   src={generalData.avatar}
@@ -242,7 +260,7 @@ export default function Home() {
 
               {/* Album cover overlay - appears on hover */}
               <AnimatePresence>
-                {isHoveringSong && spotify.albumImageUrl && (
+                {isHoveringSong && spotify?.albumImageUrl && (
                   <motion.div
                     className="absolute inset-0 flex items-center justify-center"
                     initial={{ opacity: 0 }}
@@ -251,13 +269,17 @@ export default function Home() {
                     transition={{ duration: 0.3 }}
                   >
                     <motion.div
-                      className="w-32 h-32 md:w-44 md:h-44 rounded-full overflow-hidden shadow-2xl"
+                      className="w-32 h-32 md:w-44 md:h-44 rounded-full overflow-hidden shadow-2xl bg-white/5"
                       animate={{ rotate: 360 }}
-                      transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                      transition={{
+                        duration: 4,
+                        repeat: Infinity,
+                        ease: "linear",
+                      }}
                     >
                       <Image
-                        alt={spotify.album || "Album cover"}
-                        src={spotify.albumImageUrl}
+                        alt={spotify?.album || "Album cover"}
+                        src={spotify?.albumImageUrl}
                         fill
                         draggable={false}
                         className="object-cover"
@@ -276,50 +298,65 @@ export default function Home() {
             <div className="flex flex-col justify-end">
               <h1
                 className="text-[15vw] md:text-[9vw] lg:text-[7vw] leading-[0.85] tracking-tight italic mb-4"
-                style={{ fontFamily: displayFont.startsWith("--") ? `var(${displayFont})` : displayFont }}
+                style={{ fontFamily: "var(--font-sans)" }}
               >
-                mehedi<br />
+                mehedi
+                <br />
                 <span className="inline-flex items-center gap-4">
                   hassan
-                  <AnimatePresence>
-                    {spotify.albumImageUrl && (
-                      <motion.a
-                        href={spotify.songUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        transition={{ duration: 0.3 }}
-                        className="relative w-[100px] h-[100px] ml-2 cursor-pointer block"
-                        onMouseEnter={() =>
-                          setHoveredItem({
-                            title: spotify.title || "",
-                            description: spotify.artist || "",
-                            image: spotify.albumImageUrl,
-                            link: spotify.songUrl,
-                          })
-                        }
-                        onMouseLeave={() => setHoveredItem(null)}
-                      >
-                        <motion.div
-                          animate={{ rotate: 360 }}
-                          transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-                          className="w-full h-full rounded-full overflow-hidden"
+                  <span className="relative w-[100px] h-[100px] ml-2 block">
+                    {/* Placeholder to prevent layout shift */}
+                    <span className="absolute inset-0 rounded-full" />
+                    <AnimatePresence>
+                      {spotify?.albumImageUrl && (
+                        <motion.a
+                          href={spotify?.songUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          initial={{ opacity: 0 }}
+                          animate={{
+                            opacity: 1,
+                            scale: songChanged ? [1, 1.15, 1] : 1,
+                          }}
+                          exit={{ opacity: 0 }}
+                          transition={{
+                            opacity: { duration: 0.8, ease: "easeInOut" },
+                            scale: { duration: 0.6, ease: "easeOut" },
+                          }}
+                          className="absolute inset-0 cursor-pointer block"
+                          onMouseEnter={() =>
+                            setHoveredItem({
+                              title: spotify?.title || "",
+                              description: spotify?.artist || "",
+                              image: spotify?.albumImageUrl,
+                              link: spotify?.songUrl,
+                            })
+                          }
+                          onMouseLeave={() => setHoveredItem(null)}
                         >
-                          <Image
-                            alt={spotify.album || "Album cover"}
-                            src={spotify.albumImageUrl}
-                            fill
-                            className="object-cover"
-                          />
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="w-6 h-6 rounded-full bg-[#030303] border border-white/20" />
-                          </div>
-                        </motion.div>
-                      </motion.a>
-                    )}
-                  </AnimatePresence>
+                          <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{
+                              duration: 4,
+                              repeat: Infinity,
+                              ease: "linear",
+                            }}
+                            className="w-full h-full rounded-full overflow-hidden"
+                          >
+                            <Image
+                              alt={spotify?.album || "Album cover"}
+                              src={spotify?.albumImageUrl}
+                              fill
+                              className="object-cover"
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="w-6 h-6 rounded-full bg-[#030303] border border-white/20" />
+                            </div>
+                          </motion.div>
+                        </motion.a>
+                      )}
+                    </AnimatePresence>
+                  </span>
                 </span>
               </h1>
 
@@ -329,6 +366,8 @@ export default function Home() {
                   href="https://granola.ai"
                   target="_blank"
                   className="text-[#8DEA75] hover:underline underline-offset-4"
+                  onMouseEnter={() => setActiveImage("granola")}
+                  onMouseLeave={() => setActiveImage("default")}
                 >
                   granola
                 </a>
@@ -336,7 +375,9 @@ export default function Home() {
                 <a
                   href="https://findsonder.app"
                   target="_blank"
-                  className="text-[#E8DCC4] hover:underline underline-offset-4"
+                  className="text-[#FF9F7A] hover:underline underline-offset-4"
+                  onMouseEnter={() => setActiveImage("sonder")}
+                  onMouseLeave={() => setActiveImage("default")}
                 >
                   sonder
                 </a>
@@ -401,43 +442,6 @@ export default function Home() {
             {time.toLocaleTimeString("en-GB", { hour12: false })} london
           </div>
         </div>
-      </div>
-
-      {/* Debug Panel */}
-      <div className="fixed bottom-4 right-4 z-50">
-        <button
-          onClick={() => setDebugOpen(!debugOpen)}
-          className="bg-white/10 hover:bg-white/20 text-white text-xs px-3 py-2 rounded-lg backdrop-blur-sm transition-colors"
-        >
-          {debugOpen ? "close" : "fonts"}
-        </button>
-        <AnimatePresence>
-          {debugOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              className="absolute bottom-12 right-0 bg-[#1a1a1a] border border-white/10 rounded-xl p-4 min-w-[200px] shadow-2xl"
-            >
-              <p className="text-white/50 text-xs mb-3">display font</p>
-              <div className="flex flex-col gap-2">
-                {fontOptions.map((font) => (
-                  <button
-                    key={font.value}
-                    onClick={() => setDisplayFont(font.value)}
-                    className={`text-left text-sm px-3 py-2 rounded-lg transition-colors ${
-                      displayFont === font.value
-                        ? "bg-[var(--color-vibrant)] text-white"
-                        : "text-white/70 hover:bg-white/10"
-                    }`}
-                  >
-                    {font.label}
-                  </button>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
     </main>
   );

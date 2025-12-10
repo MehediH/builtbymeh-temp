@@ -37,23 +37,21 @@ const raleway = Raleway({
 });
 
 export const metadata: Metadata = {
-  title: `${generalData.name}`,
-  description:
-    " hey! i am mehedi - a software engineer who loves simplicity and building fun products",
+  title: "mehedi hassan",
+  description: "engineer building fun things :)",
   openGraph: {
     type: "website",
     locale: "en_US",
     url: "",
-    siteName: `${generalData.name} - ${generalData.jobTitle}`,
-    title: `${generalData.name} - ${generalData.jobTitle}`,
-    description:
-      "hey! i am mehedi - a software engineer who loves simplicity and building fun products",
+    siteName: "mehedi hassan",
+    title: "mehedi hassan",
+    description: "engineer building fun things :)",
     images: [
       {
-        url: "./cover.png",
+        url: "/og.png",
         width: 1200,
         height: 630,
-        alt: `${generalData.name} - ${generalData.jobTitle}`,
+        alt: `${generalData.name}`,
       },
     ],
   },
