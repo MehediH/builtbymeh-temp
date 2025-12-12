@@ -99,7 +99,12 @@ export default function Home() {
   const [spotify, setSpotify] = useState<SpotifyData | null>(null);
   const [isHoveringSong, setIsHoveringSong] = useState(false);
   const [songChanged, setSongChanged] = useState(false);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
   const { setActiveImage } = useBackground();
+
+  useEffect(() => {
+    setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0);
+  }, []);
 
   const fetchSpotify = useCallback(async () => {
     try {
@@ -156,15 +161,28 @@ export default function Home() {
         {hoveredItem && (
           <motion.div
             key={hoveredItem.title}
-            className="fixed z-[100] pointer-events-none overflow-hidden shadow-2xl rounded-2xl bg-[#301c2a] max-w-sm"
-            style={{
-              left: Math.min(mousePos.x + 24, windowSize.width - 380),
-              bottom: windowSize.height - mousePos.y + 16,
-            }}
-            initial={{ opacity: 0, y: 8 }}
+            className={`fixed z-[100] overflow-hidden shadow-2xl rounded-2xl bg-[#301c2a] ${
+              isTouchDevice
+                ? "left-4 right-4 pointer-events-auto"
+                : "max-w-sm pointer-events-none"
+            }`}
+            style={
+              isTouchDevice
+                ? { bottom: "calc(1rem + env(safe-area-inset-bottom, 0px))" }
+                : {
+                    left: Math.min(mousePos.x + 24, windowSize.width - 380),
+                    bottom: windowSize.height - mousePos.y + 16,
+                  }
+            }
+            initial={{ opacity: 0, y: isTouchDevice ? 50 : 8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.15, ease: "easeOut" }}
+            exit={{ opacity: 0, y: isTouchDevice ? 50 : -8 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            onClick={() => {
+              if (isTouchDevice && hoveredItem.link) {
+                window.open(hoveredItem.link, "_blank");
+              }
+            }}
           >
             <div className="absolute inset-0 overflow-hidden rounded-2xl">
               {(() => {
@@ -219,7 +237,23 @@ export default function Home() {
                   <p className="text-white/70 text-sm leading-relaxed">
                     {hoveredItem.description}
                   </p>
+                  {isTouchDevice && hoveredItem.link && (
+                    <p className="text-white/40 text-xs mt-3">
+                      tap to open link
+                    </p>
+                  )}
                 </>
+              )}
+              {isTouchDevice && (
+                <button
+                  className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-full bg-white/10 text-white/60"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setHoveredItem(null);
+                  }}
+                >
+                  ×
+                </button>
               )}
             </div>
           </motion.div>
@@ -269,17 +303,21 @@ export default function Home() {
       <div className="flex-1 flex flex-col justify-between px-6 md:px-12 lg:px-24 py-12">
         {/* Hero */}
         <div className="flex-1 flex flex-col justify-center">
-          <div className="flex flex-col md:flex-row md:items-end gap-6 md:gap-10">
+          <div className="flex flex-col md:flex-row md:items-start gap-6 md:gap-10">
             {/* Profile image / Vinyl */}
             <div className="w-52 h-52 md:w-72 md:h-72 relative shrink-0">
               {/* Profile image - always visible */}
-              <div className="absolute inset-0 rounded-2xl overflow-hidden bg-white/5">
+              <div
+                className="absolute inset-0 rounded-2xl overflow-hidden bg-white/5"
+                style={{ transform: 'translateZ(0)' }}
+              >
                 <Image
                   alt="Author"
                   src={generalData.avatar}
                   fill
                   draggable={false}
                   className="object-cover"
+                  priority
                 />
               </div>
 
@@ -347,15 +385,39 @@ export default function Home() {
                             ease: [0.34, 1.56, 0.64, 1],
                           }}
                           className="absolute inset-0 cursor-pointer block"
-                          onMouseEnter={() =>
-                            setHoveredItem({
-                              title: spotify?.title || "",
-                              description: spotify?.artist || "",
-                              image: spotify?.albumImageUrl,
-                              link: spotify?.songUrl,
-                            })
-                          }
-                          onMouseLeave={() => setHoveredItem(null)}
+                          onMouseEnter={() => {
+                            if (!isTouchDevice) {
+                              setHoveredItem({
+                                title: spotify?.title || "",
+                                description: spotify?.artist || "",
+                                image: spotify?.albumImageUrl,
+                                link: spotify?.songUrl,
+                              });
+                            }
+                          }}
+                          onMouseLeave={() => {
+                            if (!isTouchDevice) {
+                              setHoveredItem(null);
+                            }
+                          }}
+                          onClick={(e) => {
+                            if (isTouchDevice) {
+                              e.preventDefault();
+                              if (hoveredItem?.title === spotify?.title) {
+                                // Second tap - open link
+                                window.open(spotify?.songUrl, "_blank");
+                                setHoveredItem(null);
+                              } else {
+                                // First tap - show popover
+                                setHoveredItem({
+                                  title: spotify?.title || "",
+                                  description: spotify?.artist || "",
+                                  image: spotify?.albumImageUrl,
+                                  link: spotify?.songUrl,
+                                });
+                              }
+                            }
+                          }}
                         >
                           <motion.div
                             animate={{ rotate: 360 }}
@@ -391,6 +453,16 @@ export default function Home() {
                   className="text-[#8DEA75] hover:underline underline-offset-4"
                   onMouseEnter={() => setActiveImage("granola")}
                   onMouseLeave={() => setActiveImage("default")}
+                  onClick={(e) => {
+                    if (isTouchDevice) {
+                      e.preventDefault();
+                      setActiveImage("granola");
+                      setTimeout(() => {
+                        window.open("https://granola.ai", "_blank");
+                        setActiveImage("default");
+                      }, 800);
+                    }
+                  }}
                 >
                   granola
                 </a>
@@ -401,6 +473,16 @@ export default function Home() {
                   className="text-[#FF9F7A] hover:underline underline-offset-4"
                   onMouseEnter={() => setActiveImage("sonder")}
                   onMouseLeave={() => setActiveImage("default")}
+                  onClick={(e) => {
+                    if (isTouchDevice) {
+                      e.preventDefault();
+                      setActiveImage("sonder");
+                      setTimeout(() => {
+                        window.open("https://findsonder.app", "_blank");
+                        setActiveImage("default");
+                      }, 800);
+                    }
+                  }}
                 >
                   sonder
                 </a>
@@ -425,14 +507,33 @@ export default function Home() {
                 <span
                   key={index}
                   className="cursor-default hover:text-[var(--color-vibrant)] transition-colors"
-                  onMouseEnter={() =>
-                    setHoveredItem({
-                      title: `${item.subTitle.toLowerCase()} @ ${item.title.toLowerCase()}`,
-                      description: item.description || "",
-                      shaderSeed: index,
-                    })
-                  }
-                  onMouseLeave={() => setHoveredItem(null)}
+                  onMouseEnter={() => {
+                    if (!isTouchDevice) {
+                      setHoveredItem({
+                        title: `${item.subTitle.toLowerCase()} @ ${item.title.toLowerCase()}`,
+                        description: item.description || "",
+                        shaderSeed: index,
+                      });
+                    }
+                  }}
+                  onMouseLeave={() => {
+                    if (!isTouchDevice) {
+                      setHoveredItem(null);
+                    }
+                  }}
+                  onClick={() => {
+                    if (isTouchDevice) {
+                      if (hoveredItem?.title === `${item.subTitle.toLowerCase()} @ ${item.title.toLowerCase()}`) {
+                        setHoveredItem(null);
+                      } else {
+                        setHoveredItem({
+                          title: `${item.subTitle.toLowerCase()} @ ${item.title.toLowerCase()}`,
+                          description: item.description || "",
+                          shaderSeed: index,
+                        });
+                      }
+                    }
+                  }}
                 >
                   {item.title.toLowerCase()}
                   {index < work.items.length - 1 && ", "}
@@ -448,14 +549,38 @@ export default function Home() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-[var(--color-vibrant)] transition-colors"
-                  onMouseEnter={() =>
-                    setHoveredItem({
-                      title: item.title.toLowerCase(),
-                      description: item.subTitle,
-                      shaderSeed: index + 10,
-                    })
-                  }
-                  onMouseLeave={() => setHoveredItem(null)}
+                  onMouseEnter={() => {
+                    if (!isTouchDevice) {
+                      setHoveredItem({
+                        title: item.title.toLowerCase(),
+                        description: item.subTitle,
+                        shaderSeed: index + 10,
+                        link: item.link,
+                      });
+                    }
+                  }}
+                  onMouseLeave={() => {
+                    if (!isTouchDevice) {
+                      setHoveredItem(null);
+                    }
+                  }}
+                  onClick={(e) => {
+                    if (isTouchDevice) {
+                      if (hoveredItem?.title === item.title.toLowerCase()) {
+                        // Second tap - let the link open
+                        return;
+                      } else {
+                        // First tap - show popover, prevent link
+                        e.preventDefault();
+                        setHoveredItem({
+                          title: item.title.toLowerCase(),
+                          description: item.subTitle,
+                          shaderSeed: index + 10,
+                          link: item.link,
+                        });
+                      }
+                    }
+                  }}
                 >
                   {item.title.toLowerCase()}
                   {index < 3 && ", "}

@@ -8,7 +8,7 @@ import {
 } from "next/font/google";
 import Providers from "./providers";
 import { generalData } from "@/data/general";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import HalftoneBackground from "@/components/halftone-bg";
 
 const spaceGrotesk = Space_Grotesk({
@@ -43,6 +43,12 @@ const fraunces = Fraunces({
   weight: ["300", "400", "500", "600", "700", "800", "900"],
   style: ["normal", "italic"],
 });
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
 
 export const metadata: Metadata = {
   title: "mehedi hassan",
