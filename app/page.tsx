@@ -21,9 +21,125 @@ interface SpotifyData {
 function ContactLink({
   contact,
 }: {
-  contact: { label: string; href: string };
+  contact: { label: string; href: string; value?: string };
 }) {
   const [isHovering, setIsHovering] = useState(false);
+  const [showPopover, setShowPopover] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const isSayHi = contact.label === "say hi";
+  const email = contact.value || "meh@builtbymeh.com";
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(email);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  };
+
+  if (isSayHi) {
+    return (
+      <div className="relative">
+        <button
+          onClick={() => setShowPopover(!showPopover)}
+          className="text-sm opacity-50 hover:opacity-100 hover:text-[var(--color-vibrant)] transition-all lowercase relative z-10"
+          onMouseEnter={() => setIsHovering(true)}
+          onMouseLeave={() => setIsHovering(false)}
+        >
+          <AnimatePresence>
+            {isHovering && (
+              <motion.span
+                className="absolute right-[calc(100%+1px)] origin-[70%_70%] grayscale sepia -z-10"
+                initial={{ x: 20, opacity: 0 }}
+                animate={{
+                  x: 0,
+                  opacity: 1,
+                  scale: 1,
+                  filter: "blur(0px)",
+                  rotate: [0, 14, -8, 14, -4, 10, 0],
+                }}
+                exit={{ opacity: 0, scale: 0.5, filter: "blur(4px)" }}
+                transition={{
+                  x: { duration: 0.2, ease: "easeOut" },
+                  opacity: { duration: 0.15 },
+                  scale: { duration: 0.15 },
+                  filter: { duration: 0.15 },
+                  rotate: {
+                    duration: 0.6,
+                    ease: "easeInOut",
+                  },
+                }}
+              >
+                👋🏽
+              </motion.span>
+            )}
+          </AnimatePresence>
+          {contact.label}
+        </button>
+
+        <AnimatePresence>
+          {showPopover && (
+            <>
+              {/* Backdrop */}
+              <motion.div
+                className="fixed inset-0 z-[99]"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setShowPopover(false)}
+              />
+              {/* Popover */}
+              <motion.div
+                className="absolute bottom-full left-0 mb-3 z-[100] overflow-hidden shadow-2xl rounded-2xl bg-[#301c2a] min-w-[280px]"
+                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: copied ? [1, 1.02, 1] : 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+              >
+                <div className="absolute inset-0 overflow-hidden rounded-2xl">
+                  <Dithering
+                    width={400}
+                    height={300}
+                    colorBack="#301c2a"
+                    colorFront="#bc208f"
+                    shape="warp"
+                    type="4x4"
+                    size={2}
+                    speed={0.5}
+                    scale={0.7}
+                    style={{ width: "100%", height: "100%" }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+                </div>
+                <div className="relative z-10 p-5">
+                  <p className="text-white/60 text-sm mb-3">
+                    you thought it&apos;d be an annoying mailto: link?
+                  </p>
+                  <p className="text-white font-medium mb-4">
+                    here&apos;s my email:
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <code className="bg-white/10 px-3 py-2 rounded-lg text-white/90 text-sm flex-1 font-mono">
+                      {email}
+                    </code>
+                    <button
+                      onClick={handleCopy}
+                      className="bg-white/10 hover:bg-white/20 transition-colors px-3 py-2 rounded-lg text-white/90 text-sm w-[70px] text-center"
+                    >
+                      {copied ? "copied!" : "copy"}
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  }
 
   return (
     <a
@@ -34,36 +150,6 @@ function ContactLink({
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
     >
-      {contact.label === "say hi" && (
-        <AnimatePresence>
-          {isHovering && (
-            <motion.span
-              className="absolute right-[calc(100%+1px)] origin-[70%_70%] grayscale sepia -z-10"
-              initial={{ x: 20, opacity: 0 }}
-              animate={{
-                x: 0,
-                opacity: 1,
-                scale: 1,
-                filter: "blur(0px)",
-                rotate: [0, 14, -8, 14, -4, 10, 0],
-              }}
-              exit={{ opacity: 0, scale: 0.5, filter: "blur(4px)" }}
-              transition={{
-                x: { duration: 0.2, ease: "easeOut" },
-                opacity: { duration: 0.15 },
-                scale: { duration: 0.15 },
-                filter: { duration: 0.15 },
-                rotate: {
-                  duration: 0.6,
-                  ease: "easeInOut",
-                },
-              }}
-            >
-              👋🏽
-            </motion.span>
-          )}
-        </AnimatePresence>
-      )}
       {contact.label}
     </a>
   );
